@@ -4,3 +4,38 @@
 @import "base-styles/variables"; // variables - include these wherever they are needed
 @import "~bootstrap/scss/bootstrap";  // bootstrap
 @import "base-styles/base"; // body, typography, basic elements
+
+
+.wrapper {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  grid-auto-rows: minmax(100px, auto);
+}
+
+.cell {
+  border: 1px dashed grey;
+  min-width: 150px;
+  min-height: 150px
+}
+
+.issue {
+  padding: 12px 12px 20px;
+  margin:5px 10px ;
+  text-align: center;
+  font-family: "Reenie Beanie",arial,sans-serif;
+  font-size: 80%;
+  background: -webkit-linear-gradient(#F9EFAF, #F7E98D);
+  background: -moz-linear-gradient(#F9EFAF, #F7E98D);
+  background: -o-linear-gradient(#F9EFAF, #F7E98D);
+  background: -ms-linear-gradient(#F9EFAF, #F7E98D);
+  background: linear-gradient(#F9EFAF, #F7E98D);
+  -o-transform:rotate(4deg);
+  -webkit-transform:rotate(4deg);
+  -moz-transform:rotate(4deg);
+  box-shadow:0 4px 6px rgba(0,0,0,0.1);
+  overflow:hidden;
+  transition:box-shadow 0.5s ease;
+  font-smoothing:subpixel-antialiased;
+  max-width:520px;
+  max-height:250px;
+}
