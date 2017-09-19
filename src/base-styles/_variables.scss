@@ -1,0 +1,6 @@
+// variables index - all actual variables should go into project-variables
+// or custom-bootstrap variables files.
+
+@import "project-variables"; // project variables
+@import "custom-bootstrap";  // overridden bootstrap variables
+// the default bootstrap variables get included via main import in index.scss
