@@ -2,6 +2,7 @@ import React from 'react'
 import PropTypes from 'prop-types'
 import {Base64} from 'js-base64'
 import { WithContext as ReactTags } from 'react-tag-input'
+import Loading from 'components/loading'
 
 import './index.scss'
 
@@ -17,7 +18,8 @@ class Config extends React.Component {
       password: '',
       project: '',
       projects: [],
-      tags: []
+      tags: [],
+      isLoading: false
     }
   }
 
@@ -122,6 +124,11 @@ class Config extends React.Component {
         categories = data[1].reverse()
       }
 
+      if (!categories.length || !data[2].length) {
+        alert("Selected Project doesn't have any categories or milestones")
+        return false
+      }
+
       return {
         categories,
         milestones: data[2].reverse(),
@@ -157,14 +164,16 @@ class Config extends React.Component {
       let issues = json2.issues
 
 
-      let categories = issues.map(i => ({name: i.category.name, id: i.category.id}))
+      let categories = issues.filter(i => !!i.category).map(i => ({name: i.category.name, id: i.category.id}))
 
       let uniqueCategories = categories.reduce((hash, obj) => {
         let isExist = Object.values(hash).some(v => v.id === obj.id)
         return !isExist ? Object.assign(hash, {[obj.id] : obj}) : hash
       }, Object.create(null))
 
-      let milestones = issues.map((i, id) => ({title: i.release.release.name, id: i.release.release.id, number: -1 * id}))
+      let milestones = issues
+        .filter(m => !!m.release && !!m.release.release)
+        .map((i, id) => ({title: i.release.release.name, id: i.release.release.id, number: -1 * id}))
 
       let uniqueMilestones = Object.values(milestones.reduce((hash, obj) => {
         let isExist = Object.values(hash).some(v => v.id === obj.id)
@@ -179,13 +188,18 @@ class Config extends React.Component {
         filteredCategories = Object.values(uniqueCategories).reverse()
       }
 
+      if (!categories.length || !milestones.length) {
+        alert("Selected Project doesn't have any categories or milestones")
+        return false
+      }
+
       return {
         categories: filteredCategories,
         milestones: uniqueMilestones,
         issues: json2.issues.map(i => ({
           title: i.subject,
-          milestone: i.release.release.name,
-          labels: [i.category.name],
+          milestone: !!i.release && !!i.release.release ? i.release.release.name : null,
+          labels: [i.category ? i.category.name:null],
           user: i.author.name,
           id: i.id
         }))
@@ -207,20 +221,25 @@ class Config extends React.Component {
     switch(this.state.issueTracker) {
       case 'GitHub':
         if (this.state.username && this.state.project) {
+          this.setState({ isLoading: true })
           data = await this.fetchGithub()
+          this.setState({ isLoading: false })
         } else {
           alert('username or project name is missing')
         }
         break
       case 'GitLab':
+        this.setState({ isLoading: true })
         data = await this.fetchGitlabExternal()
+        this.setState({ isLoading: false })
         break
       case 'Redmine':
+        this.setState({ isLoading: true })
         data = await this.fetchRedmine()
-
+        this.setState({ isLoading: false })
         break
       default:
-        console.log(this.state.issueTracker)
+        console.log('Issue tracker does not exist', this.state.issueTracker)
     }
 
     if (data) {
@@ -261,6 +280,8 @@ class Config extends React.Component {
       'Authorization': 'Basic ' + Base64.encode(this.state.username + ':' + this.state.password)
     })
     let response = await fetch(`${redmine_url}/projects.json`, { headers })
+
+
     let json = await response.json()
     return json.projects
   }
@@ -278,28 +299,30 @@ class Config extends React.Component {
 
       switch(this.state.issueTracker) {
         case 'GitHub':
+          this.setState({ isLoading: true })
           var endpoint = 'https://story-map-view-server.herokuapp.com/github'
           response = await fetch(`${endpoint}/user/repos`, { headers }),
           data = await response.json()
+          this.setState({ isLoading: true })
 
           break
         case 'GitLab':
+          this.setState({ isLoading: true })
           data = await this.loadGitlabProjects()
+          this.setState({ isLoading: false })
           break
         case 'Redmine':
+          this.setState({ isLoading: true })
           data = await this.loadRedmineProjects()
+          this.setState({ isLoading: false })
           break
         default:
-          console.log(this.state.issueTracker)
+          console.log('Issue tracker does not exist', this.state.issueTracker)
       }
 
       if (data) {
-        console.log('data', data)
-        this.setState({
-          projects: data
-        })
+        this.setState({ projects: data })
       }
-
     }
   }
 
@@ -334,53 +357,55 @@ class Config extends React.Component {
         <h1>Config</h1>
         <div className='row'>
           <div className='col-md-12'>
-
-            <form className='form1' action=''>
-              <label htmlFor='tracker-type'>Select Tool</label>
-              <select id='tracker-type' value={issueTracker} onChange={this.onIssueTrackerChange.bind(this)}>
-                {issueTrackers.map((option, i) => <option key={i} value={option}>{option}</option>)}
-              </select>
-
-              <label htmlFor='username'>Username</label>
-              <input id='username' type='text' value={username} onChange={this.onUsernameChange.bind(this)} />
-
-              <label htmlFor='password'>Password</label>
-              <input id='password' type='password' value={password} onChange={this.onPasswordChange.bind(this)} />
-
-              <label htmlFor='project-name'>Enter the project or select from the list</label>
-              { this.state.projects.length ?
-                <select id='projects' onChange={this.onProjectChange.bind(this)}>
-                  {this.state.projects.map((option, i) => <option key={i} value={option.name}>{option.name}</option>)}
+            { this.state.isLoading ? <Loading /> :
+              <form className='form1' action=''>
+                <label htmlFor='tracker-type'>Select Tool</label>
+                <select id='tracker-type' value={issueTracker} onChange={this.onIssueTrackerChange.bind(this)} className="form-control">
+                  {issueTrackers.map((option, i) => <option key={i} value={option}>{option}</option>)}
                 </select>
-                :
+
+                <label htmlFor='username'>Username</label>
+                <input id='username' type='text' value={username} onChange={this.onUsernameChange.bind(this)} />
+
+                <label htmlFor='password'>Password</label>
+                <input id='password' type='password' value={password} onChange={this.onPasswordChange.bind(this)} />
+
+                <label htmlFor='project-name'>Enter the project or select from the list</label>
+                { this.state.projects.length ?
+                  <select id='projects' onChange={this.onProjectChange.bind(this)}  className="form-control">
+                    <option value=""></option>
+                    {this.state.projects.map((option, i) => <option key={i} value={option.name}>{option.name}</option>)}
+                  </select>
+                  :
+                  <button
+                    onClick={this.handleLoadProjects.bind(this)}
+                    className='btn btn-primary'
+                  >Load Projects</button>
+                }
+
+                <input
+                  id='project-name'
+                  type='text'
+                  value={this.state.project}
+                  onChange={this.onProjectChange.bind(this)}
+                  placeholder='story-map-view'
+                />
+
+
+                <label htmlFor='tags'>Story Map Tags</label>
+                <ReactTags
+                  tags={this.state.tags}
+                  id="tags"
+                  handleDelete={this.handleDelete.bind(this)}
+                  handleAddition={this.handleAddition.bind(this)}
+                  handleDrag={this.handleDrag.bind(this)} />
+
                 <button
-                  onClick={this.handleLoadProjects.bind(this)}
+                  onClick={this.handleViewStoryMap.bind(this)}
                   className='btn btn-primary'
-                >Load Projects</button>
-              }
-
-              <input
-                id='project-name'
-                type='text'
-                value={this.state.project}
-                onChange={this.onProjectChange.bind(this)}
-                placeholder='story-map-view'
-              />
-
-
-              <label htmlFor='tags'>Story Map Tags</label>
-              <ReactTags
-                tags={this.state.tags}
-                id="tags"
-                handleDelete={this.handleDelete.bind(this)}
-                handleAddition={this.handleAddition.bind(this)}
-                handleDrag={this.handleDrag.bind(this)} />
-
-              <button
-                onClick={this.handleViewStoryMap.bind(this)}
-                className='btn btn-primary'
-              >View Story Map</button>
-            </form>
+                >View Story Map</button>
+              </form>
+            }
           </div>
         </div>
       </div>

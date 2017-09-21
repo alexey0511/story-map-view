@@ -6,13 +6,13 @@ class StoryMapView extends React.Component {
     const { categories, milestones, issues } = this.props
 
     let headings = categories.map((c) => {
-      return <div key={'h_' + c.id}>{c.name}</div>
+      return <div key={'h_' + c.id} className="column-heading">{c.name}</div>
     }).reverse()
 
     let data = [].concat(headings)
 
     milestones.sort((a,b) => a.number > b.number).forEach((m) => {
-      data.push(<div key={'m_' + m.id}>{m.title}</div>)
+      data.push(<div key={'m_' + m.id} className="row-heading">{m.title}</div>)
       categories.reverse().forEach(c => {
         let issuesfiltered = issues.filter(issue => {
           return issue.milestone === m.title && issue.labels.includes(c.name)
@@ -34,12 +34,8 @@ class StoryMapView extends React.Component {
       <div className="container">
         <div className="row">
           <div className="col-md-12">
-            <h1>React app</h1>
-            <div>Displaying issues from
-              <a href="https://github.com/alexey0511/story-map-view/issues">
-                https://github.com/alexey0511/story-map-view/issues
-              </a></div>
-            <button className="btn btn-primary" onClick={() => this.props.onBack()}>Back</button>
+            <h1>Story Map</h1>
+            <button className="btn btn-primary" onClick={() => this.props.onBack()}>GO Back</button>
             <div className="wrapper" style={{gridTemplateColumns: `repeat(${categories.length + 1}, 1fr)`}}>
               <div className="cell" style={{border: '0px'}}></div>
               { data }

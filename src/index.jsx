@@ -49,6 +49,7 @@ class App extends React.Component {
         <div>Test data</div>
         <div>Gitlab project: test-project</div>
         <div>Github project: story-map-view</div>
+        <div>Redmine project: Catalon Story Mapping</div>
       </div>
     )
   }
