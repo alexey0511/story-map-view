@@ -1,6 +1,7 @@
 import React from 'react'
 import PropTypes from 'prop-types'
 import {Base64} from 'js-base64'
+import { WithContext as ReactTags } from 'react-tag-input'
 
 import './index.scss'
 
@@ -15,8 +16,8 @@ class Config extends React.Component {
       username: '',
       password: '',
       project: '',
-      redmineKey: '',
-      projects: []
+      projects: [],
+      tags: []
     }
   }
 
@@ -33,9 +34,6 @@ class Config extends React.Component {
   onPasswordChange(e) {
     this.setState({ password: e.target.value })
   }
-  onRedmineKeyChange(e) {
-    this.setState({ redmineKey: e.target.value })
-  }
 
   onProjectChange(e) {
     this.setState({ project: e.target.value })
@@ -43,18 +41,29 @@ class Config extends React.Component {
 
   async fetchGithub() {
     try {
-      let endpoint = 'https://api.github.com'
+      let endpoint = 'https://story-map-view-server.herokuapp.com/github'
+      let headers = new Headers({
+        'Authorization': 'Basic ' + Base64.encode(this.state.username + ':' + this.state.password)
+      })
+
       let backend_url = `${endpoint}/repos/${this.state.username}/${this.state.project}`
       let responses = await Promise.all([
-        fetch(`${backend_url}/issues`),
-        fetch(`${backend_url}/labels`),
-        fetch(`${backend_url}/milestones`)
+        fetch(`${backend_url}/issues`, { headers }),
+        fetch(`${backend_url}/labels`, { headers }),
+        fetch(`${backend_url}/milestones`, { headers })
       ])
 
       let data = await Promise.all(responses.map(r => r.json()))
 
+      let categories
+      if (this.state.tags.length) {
+        let tags = this.state.tags.map(t => t.text)
+        categories = data[1].filter(c => tags.includes(c.name)).reverse()
+      } else {
+        categories = data[1].reverse()
+      }
       return {
-        categories: data[1].filter(c => c.name.indexOf('Category') > -1).reverse(),
+        categories,
         milestones: data[2].reverse(),
         issues: data[0].map(i => {
           return {
@@ -72,7 +81,7 @@ class Config extends React.Component {
   async fetchGitlabExternal() {
     try {
       // get access token
-      const gitlab_url = 'https://gitlab.catalyst.net.nz'
+      let gitlab_url = 'https://story-map-view-server.herokuapp.com/gitlab'
 
       let params = {
         grant_type: 'password',
@@ -105,9 +114,16 @@ class Config extends React.Component {
       ])
 
       let data = await Promise.all(responses.map(r => r.json()))
+      let categories
+      if (this.state.tags.length) {
+        let tags = this.state.tags.map(t => t.text)
+        categories = data[1].filter(c => tags.includes(c.name)).reverse()
+      } else {
+        categories = data[1].reverse()
+      }
 
       return {
-        categories: data[1].filter(c => c.name.indexOf('Category') > -1).reverse(),
+        categories,
         milestones: data[2].reverse(),
         issues: data[0].map(i => {
           return {
@@ -124,31 +140,49 @@ class Config extends React.Component {
 
   async fetchRedmine() {
     try {
-      const redmine_url = 'https://redmine.catalyst.net.nz'
+      let redmine_url = 'https://story-map-view-server.herokuapp.com/redmine'
 
-      let project = { id: 396}
-      let response = await fetch(`${redmine_url}/issues.json?key=${this.state.redmineKey}&project_id=${project.id}&include=relations`)
-      let json = await response.json()
+      let headers = new Headers({
+        'Authorization': 'Basic ' + Base64.encode(this.state.username + ':' + this.state.password)
+      })
+
+      let r1 = await fetch(`${redmine_url}/projects.json`, { headers })
+      let json1 = await r1.json()
+      let project = json1.projects.find(p => p.name === this.state.project)
+
+      if (!project) { return false }
+
+      let r2 = await fetch(`${redmine_url}/issues.json?project_id=${project.id}&include=relations`, { headers })
+      let json2 = await r2.json()
+      let issues = json2.issues
 
 
-      let categories = json.issues.map(i => ({name: i.category.name, id: i.category.id}))
+      let categories = issues.map(i => ({name: i.category.name, id: i.category.id}))
 
       let uniqueCategories = categories.reduce((hash, obj) => {
         let isExist = Object.values(hash).some(v => v.id === obj.id)
         return !isExist ? Object.assign(hash, {[obj.id] : obj}) : hash
       }, Object.create(null))
 
-      let milestones = json.issues.map((i, id) => ({title: i.release.release.name, id: i.release.release.id, number: -1 * id}))
+      let milestones = issues.map((i, id) => ({title: i.release.release.name, id: i.release.release.id, number: -1 * id}))
 
       let uniqueMilestones = Object.values(milestones.reduce((hash, obj) => {
         let isExist = Object.values(hash).some(v => v.id === obj.id)
         return !isExist ? Object.assign(hash, {[obj.id] : obj}) : hash
       }, Object.create(null)))
 
+      let filteredCategories
+      if (this.state.tags.length) {
+        let tags = this.state.tags.map(t => t.text)
+        filteredCategories = Object.values(uniqueCategories).filter(c => tags.includes(c.name)).reverse()
+      } else {
+        filteredCategories = Object.values(uniqueCategories).reverse()
+      }
+
       return {
-        categories: Object.values(uniqueCategories).reverse(),
+        categories: filteredCategories,
         milestones: uniqueMilestones,
-        issues: json.issues.map(i => ({
+        issues: json2.issues.map(i => ({
           title: i.subject,
           milestone: i.release.release.name,
           labels: [i.category.name],
@@ -194,8 +228,107 @@ class Config extends React.Component {
     }
   }
 
+  async loadGitlabProjects() {
+    let gitlab_url = 'https://story-map-view-server.herokuapp.com/gitlab'
+
+    let params = {
+      grant_type: 'password',
+      username: this.state.username,
+      password: this.state.password
+    }
+
+    let formData = new FormData()
+
+    for (var k in params) {
+      formData.append(k, params[k])
+    }
+
+    let r1 = await fetch(`${gitlab_url}/oauth/token`, {
+      method: 'POST',
+      body: formData
+    })
+    const { access_token } = await r1.json()
+
+    // get project id
+    let r2 = await fetch(`${gitlab_url}/api/v4/projects?access_token=${access_token}`)
+    return await r2.json()
+  }
+
+  async loadRedmineProjects() {
+    let redmine_url = 'https://story-map-view-server.herokuapp.com/redmine'
+
+    let headers = new Headers({
+      'Authorization': 'Basic ' + Base64.encode(this.state.username + ':' + this.state.password)
+    })
+    let response = await fetch(`${redmine_url}/projects.json`, { headers })
+    let json = await response.json()
+    return json.projects
+  }
+
+  async handleLoadProjects(e) {
+    e.preventDefault()
+    let data, response
+
+    if (!this.state.username || !this.state.password) {
+      alert('Provide username or login')
+    } else {
+      let headers = new Headers({
+        'Authorization': 'Basic ' + Base64.encode(this.state.username + ':' + this.state.password)
+      })
+
+      switch(this.state.issueTracker) {
+        case 'GitHub':
+          var endpoint = 'https://story-map-view-server.herokuapp.com/github'
+          response = await fetch(`${endpoint}/user/repos`, { headers }),
+          data = await response.json()
+
+          break
+        case 'GitLab':
+          data = await this.loadGitlabProjects()
+          break
+        case 'Redmine':
+          data = await this.loadRedmineProjects()
+          break
+        default:
+          console.log(this.state.issueTracker)
+      }
+
+      if (data) {
+        console.log('data', data)
+        this.setState({
+          projects: data
+        })
+      }
+
+    }
+  }
+
+  // tags
+  handleDelete(i) {
+    let tags = this.state.tags
+    tags.splice(i, 1)
+    this.setState({tags: tags})
+  }
+
+  handleAddition(tag) {
+    let tags = this.state.tags
+    tags.push({ id: tags.length + 1, text: tag })
+    this.setState({tags: tags})
+  }
+
+  handleDrag(tag, currPos, newPos) {
+    let tags = this.state.tags
+
+    // mutate array
+    tags.splice(currPos, 1)
+    tags.splice(newPos, 0, tag)
+
+    // re-render
+    this.setState({ tags: tags })
+  }
+
   render() {
-    const { username, password, redmineKey, issueTracker } = this.state
+    const { username, password, issueTracker } = this.state
     return (
       <div className='container'>
         <h1>Config</h1>
@@ -214,10 +347,18 @@ class Config extends React.Component {
               <label htmlFor='password'>Password</label>
               <input id='password' type='password' value={password} onChange={this.onPasswordChange.bind(this)} />
 
-              <label htmlFor='redmineKey'>Redmine Key</label>
-              <input id='redmineKey' type='redmineKey' value={redmineKey} onChange={this.onRedmineKeyChange.bind(this)} />
+              <label htmlFor='project-name'>Enter the project or select from the list</label>
+              { this.state.projects.length ?
+                <select id='projects' onChange={this.onProjectChange.bind(this)}>
+                  {this.state.projects.map((option, i) => <option key={i} value={option.name}>{option.name}</option>)}
+                </select>
+                :
+                <button
+                  onClick={this.handleLoadProjects.bind(this)}
+                  className='btn btn-primary'
+                >Load Projects</button>
+              }
 
-              <label htmlFor='project-name'>Project Name</label>
               <input
                 id='project-name'
                 type='text'
@@ -225,6 +366,15 @@ class Config extends React.Component {
                 onChange={this.onProjectChange.bind(this)}
                 placeholder='story-map-view'
               />
+
+
+              <label htmlFor='tags'>Story Map Tags</label>
+              <ReactTags
+                tags={this.state.tags}
+                id="tags"
+                handleDelete={this.handleDelete.bind(this)}
+                handleAddition={this.handleAddition.bind(this)}
+                handleDrag={this.handleDrag.bind(this)} />
 
               <button
                 onClick={this.handleViewStoryMap.bind(this)}

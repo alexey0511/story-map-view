@@ -6,6 +6,7 @@
   "scripts": {
     "test": "./node_modules/.bin/jest",
     "build": "rm -rf ./dist && ./node_modules/.bin/webpack -p",
+    "deploy": "git subtree push --prefix dist origin gh-pages",
     "start": "./node_modules/.bin/webpack-dev-server --hot --inline",
     "deps:check": "./node_modules/.bin/npm-check-updates && ./node_modules/.bin/retire",
     "deps:update": "./node_modules/.bin/npm-check-updates -u && ./node_modules/.bin/npm-check-updates -a && npm install && ./node_modules/.bin/retire",
@@ -42,6 +43,7 @@
     "react": "^15.6.1",
     "react-addons-test-utils": "^15.6.0",
     "react-dom": "^15.6.1",
+    "react-tag-input": "^4.7.2",
     "react-test-renderer": "^15.6.1",
     "retire": "^1.4.0",
     "sass-loader": "^6.0.6",
