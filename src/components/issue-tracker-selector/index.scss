@@ -1,0 +1,22 @@
+@import "~bootstrap/scss/bootstrap";  // bootstrap
+@import "~bootstrap/scss/bootstrap";  // bootstrap
+
+.issue-tracker {
+  border: 1px solid $blue;
+  cursor:pointer;
+  padding: 5px 10px;
+  border-radius: 4px;
+  width: 200px;
+  text-align: center;
+  margin: 0px 10px;
+  display: inline-block;
+  box-shadow: 0 0 5px -1px rgba(0,0,0,0.2);
+  &:hover {
+    background-color: $blue;
+    color: white;
+  }
+  &.active {
+    background-color: $blue;
+    color: white
+  }
+}

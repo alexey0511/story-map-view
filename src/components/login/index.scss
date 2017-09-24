@@ -1,0 +1,16 @@
+@import "~bootstrap/scss/bootstrap";  // bootstrap
+
+label {
+    grid-column: 1 / 2;
+}
+
+input,
+button {
+    grid-column: 2 / 3;
+}
+
+div {
+    display: grid;
+    grid-template-columns: 200px 1fr;
+    grid-gap: 16px;
+}

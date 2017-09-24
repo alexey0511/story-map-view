@@ -1,0 +1,98 @@
+// this styles index should only contain imports of libraries and base styles.
+// styles for particular components should be included directly from the component.
+
+@import "base-styles/variables"; // variables - include these wherever they are needed
+@import "~bootstrap/scss/bootstrap";  // bootstrap
+@import "base-styles/base"; // body, typography, basic elements
+@import '~bootstrap/scss/functions'; // bootstrap functions
+
+@import url(http://fonts.googleapis.com/css?family=Open+Sans:400,700,700italic,400italic);
+@mixin font-reg {
+  font-family: 'Open Sans', Arial, sans-serif;
+  font-weight: 400;
+}
+@mixin font-bold {
+  font-family: 'Open Sans', Arial, sans-serif;
+  font-weight: 700;
+};
+
+// BASE STYLES
+*,
+*::after,
+*::before {
+  box-sizing: border-box;
+}
+html {
+  @include font-reg;
+}
+
+body {
+  width: 96%;
+  margin: 30px auto;
+  line-height: 1.3em;
+  background-color: #fefffc;
+}
+
+
+// PAGE STYLES
+
+header {
+  margin-bottom: 50px;
+}
+
+// STORY MAP
+.story-map table {
+  width: 100%;
+  border-collapse: collapse;
+
+  tr {
+    border-bottom: 1px solid black;
+  }
+
+  th {
+    padding: 10px;
+  }
+
+  th,
+  td {
+    vertical-align: top;
+    border-right: 1px solid black;
+    min-width: 150px;
+  }
+
+  td {
+    height: 200px
+  }
+
+
+  .table-header-row {
+    background-color: #EEE;
+  }
+
+  tr:not(:last-child) {
+    border-bottom: 5px solid black;
+  }
+  .release {
+    white-space: nowrap;
+    background-color: #EEE;
+  }
+
+  .workflow-step {
+    white-space: nowrap;
+    text-align: center;
+  }
+
+  .story-group {
+    padding: 0;
+  }
+
+  .story {
+    background-color: #effec7;
+    padding: 10px;
+    margin: 10px;
+
+    p {
+      margin: 0;
+    }
+  }
+}
