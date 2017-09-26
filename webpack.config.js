@@ -1,9 +1,10 @@
-const path = require('path');
-const autoprefixer = require('autoprefixer');
-const flexfixes = require('postcss-flexbugs-fixes');
-const HtmlWebpackPlugin = require('html-webpack-plugin');
-const ExtractTextPlugin = require('extract-text-webpack-plugin');
-const merge = require('webpack-merge');
+const path = require('path')
+const autoprefixer = require('autoprefixer')
+const flexfixes = require('postcss-flexbugs-fixes')
+const HtmlWebpackPlugin = require('html-webpack-plugin')
+const ExtractTextPlugin = require('extract-text-webpack-plugin')
+const merge = require('webpack-merge')
+const CopyWebpackPlugin = require('copy-webpack-plugin')
 
 const env = process.env.npm_lifecycle_event === 'build' ? 'prod' : 'dev';
 let config = {};
@@ -42,7 +43,14 @@ const common = {
     new HtmlWebpackPlugin({
       template: './src/index.html',
       hash: true
-    })
+    }),
+    new CopyWebpackPlugin([{
+      from: './src/assets',
+      to: 'assets',
+      ignore: ['.gitignore']
+    }]),
+
+
   ],
 
   resolve: {

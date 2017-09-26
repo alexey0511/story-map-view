@@ -21,7 +21,7 @@ class IssueTrackerSelector extends React.Component {
       <div className={'issue-tracker ' + (this.state.active ? 'active':'')}
         onClick={() => this.props.onSelectService(this.props.name)}
       >
-        <img src={'src/assets/' + this.props.name + '-icon.png'} width="48px" height="48px" />
+        <img src={'assets/' + this.props.name + '-icon.png'} width="48px" height="48px" />
         <h4>{this.props.title}</h4>
       </div>
     )
