@@ -38,6 +38,7 @@
     "js-base64": "^2.3.2",
     "node-sass": "^4.5.3",
     "npm-check-updates": "^2.12.1",
+    "path": "^0.12.7",
     "postcss-flexbugs-fixes": "^3.2.0",
     "postcss-loader": "^2.0.6",
     "prop-types": "^15.5.10",
