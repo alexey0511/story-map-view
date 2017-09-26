@@ -99,7 +99,7 @@ class ConfigForm extends React.Component {
                   />
                   :
                   <div>
-                    <label htmlFor='project-name'>Enter the project or select from the list</label>
+                    <label htmlFor='project-name'>Enter the project ID or select from the list</label>
                     { this.state.projects.length ?
                       <select id='projects' onChange={this.onProjectChange.bind(this)}  className="form-control">
                         <option value=""></option>

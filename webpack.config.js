@@ -1,10 +1,10 @@
-const path = require('path')
-const autoprefixer = require('autoprefixer')
-const flexfixes = require('postcss-flexbugs-fixes')
-const HtmlWebpackPlugin = require('html-webpack-plugin')
-const ExtractTextPlugin = require('extract-text-webpack-plugin')
-const merge = require('webpack-merge')
+const path = require('path');
+const autoprefixer = require('autoprefixer');
+const flexfixes = require('postcss-flexbugs-fixes');
+const HtmlWebpackPlugin = require('html-webpack-plugin');
+const ExtractTextPlugin = require('extract-text-webpack-plugin');
 const CopyWebpackPlugin = require('copy-webpack-plugin')
+const merge = require('webpack-merge');
 
 const env = process.env.npm_lifecycle_event === 'build' ? 'prod' : 'dev';
 let config = {};
@@ -40,6 +40,7 @@ const common = {
   },
 
   plugins: [
+    new ExtractTextPlugin('bundle.css'),
     new HtmlWebpackPlugin({
       template: './src/index.html',
       hash: true
@@ -49,7 +50,6 @@ const common = {
       to: 'assets',
       ignore: ['.gitignore']
     }]),
-
 
   ],
 
@@ -137,7 +137,13 @@ switch (env) {
       },
 
       plugins: [
-        new ExtractTextPlugin('bundle.css')
+        new ExtractTextPlugin('bundle.css'),
+        new CopyWebpackPlugin([{
+          from: './src/assets',
+          to: 'assets',
+          ignore: ['.gitignore']
+        }]),
+
       ]
     });
     break;

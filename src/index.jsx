@@ -176,7 +176,7 @@ App.propTypes = {
 
 const Root = () => (<Router>
   <div>
-    <Route exact path="/" component={App} />
+    <Route component={App} />
   </div>
 </Router>
 )

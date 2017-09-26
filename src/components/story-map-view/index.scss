@@ -6,24 +6,11 @@
 @import "base-styles/base"; // body, typography, basic elements
 @import '~bootstrap/scss/functions'; // bootstrap functions
 
-@import url(https://fonts.googleapis.com/css?family=Open+Sans:400,700,700italic,400italic);
-@mixin font-reg {
-  font-family: 'Open Sans', Arial, sans-serif;
-  font-weight: 400;
-}
-@mixin font-bold {
-  font-family: 'Open Sans', Arial, sans-serif;
-  font-weight: 700;
-};
-
 // BASE STYLES
 *,
 *::after,
 *::before {
   box-sizing: border-box;
-}
-html {
-  @include font-reg;
 }
 
 body {
