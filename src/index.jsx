@@ -14,6 +14,7 @@ import 'index.scss'
 import StoryMapView from 'components/story-map-view'
 import Config from 'components/config'
 import Loading from 'components/loading'
+import LoginPrompt from 'components/modal'
 
 const issueTrackers = ['github', 'gitlab-external','redmine']
 
@@ -138,6 +139,11 @@ class App extends React.Component {
   render() {
     return (
       <div>
+        <LoginPrompt
+          ref={dialog => this.loginPrompt = dialog}
+          service={this.state.service}
+        />
+
         {
           this.state.allReady ?
             <StoryMapView

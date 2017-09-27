@@ -38462,4 +38462,12 @@ form > div {
 .ReactTags__tagInputField {
   width: 100%; }
 
+#project-name {
+  margin-top: 10px; }
+.service-select {
+  margin-top: 20px;
+  text-align: center; }
+  .service-select button {
+    margin: 5px 10px; }
+
 /*# sourceMappingURL=bundle.css.map*/

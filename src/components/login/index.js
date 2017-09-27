@@ -41,7 +41,7 @@ class Login extends React.Component {
   render() {
     const { username, password } = this.state
     return (
-      <div style={{display: 'grid'}}>
+      <div className="login-form">
         <label htmlFor='username'>Username</label>
         <input id='username' type='text' value={username} onChange={this.onUsernameChange.bind(this)} />
 

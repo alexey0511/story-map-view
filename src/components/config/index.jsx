@@ -6,6 +6,8 @@ import IssueTrackerSelector from 'components/issue-tracker-selector'
 import ConfigForm from 'components/config-form'
 const issueTrackers = ['github', 'gitlab-external','redmine']
 
+import './index.scss'
+
 class Config extends React.Component {
   constructor(props) {
     super(props)
@@ -29,6 +31,10 @@ class Config extends React.Component {
     if (params.has('project')) {
       params.delete('project')
     }
+    if (params.has('tags')) {
+      params.delete('tags')
+      this.props.history.push('?' + params.toString())
+    }
 
     this.props.history.push(`?${params.toString()}`)
 
@@ -37,11 +43,6 @@ class Config extends React.Component {
   render() {
     return (
       <div>
-        <div className='container'>
-          <div className='row'>
-            <h1>Config</h1>
-          </div>
-        </div>
         <div className='container service-select'>
           <div className='row'>
             <div className='col-md-12'>

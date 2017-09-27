@@ -4,7 +4,6 @@ import { WithContext as ReactTags } from 'react-tag-input'
 import Loading from 'components/loading'
 import { withRouter } from 'react-router-dom'
 import Login from 'components/login'
-import LoginPrompt from 'components/modal'
 
 import './index.scss'
 
@@ -27,10 +26,19 @@ class ConfigForm extends React.Component {
     }
   }
 
-
-  componentWillReceiveProps(props, oldProps) {
-    if (props.service && props.service !== oldProps.service) {
-      this.setState({ projects: [], selectedProject: '' })
+  componentDidMount() {
+    let params = new URLSearchParams(this.props.location.search)
+    if (params.has('tags')) {
+      this.setState({ tags: params.get('tags').split(',').map(t => ({id: t, text: t}) )})
+    }
+  }
+  componentWillReceiveProps(props) {
+    if (props.service && props.service !== this.props.service) {
+      this.setState({
+        projects: [],
+        selectedProject: '',
+        tags: []
+      })
     }
   }
 
@@ -40,27 +48,29 @@ class ConfigForm extends React.Component {
   }
 
   // // tags
-  handleDelete(i) {
-    let tags = this.state.tags
-    tags.splice(i, 1)
-    this.setState({tags: tags})
+  handleDelete(index) {
+    let tags = this.state.tags.map(t => t.id)
+    tags.splice(index, 1)
+
+    this.setState({tags: tags.map(t => ({id:t, text:t}) )})
+    let params = new URLSearchParams(this.props.location.search)
+    params.set('tags', tags.join(','))
+    this.props.history.push('?' + params.toString())
+
   }
 
   handleAddition(tag) {
-    let tags = this.state.tag
-    tags.push({ id: tags.length + 1, text: tag })
-    this.setState({tags: tags})
-  }
+    let params = new URLSearchParams(this.props.location.search)
+    let tags = params.get('tags')
+    let tagsArray = tags ? tags.split(',') : []
 
-  handleDrag(tag, currPos, newPos) {
-    let tags = this.state.tags
+    if (!tagsArray.includes(tag)) {
+      tagsArray.push(tag)
+    }
 
-    // mutate array
-    tags.splice(currPos, 1)
-    tags.splice(newPos, 0, tag)
-
-    // re-render
-    this.setState({ tags: tags })
+    this.setState({ tags: tagsArray.map(t => ({id:t, text:t }))})
+    params.set('tags', tagsArray.join(','))
+    this.props.history.push('?'+ params.toString())
   }
 
   async handleLoadProjects(e) {
@@ -86,10 +96,6 @@ class ConfigForm extends React.Component {
       <div className='container'>
         <div className='row'>
           <div className='col-md-12'>
-            <LoginPrompt
-              ref={dialog => this.loginPrompt = dialog}
-              service={this.props.service}
-            />
             { this.state.isLoading ? <Loading /> :
               <form className='form1' action=''>
                 {!this.props.isAuthenticated ?
@@ -123,14 +129,13 @@ class ConfigForm extends React.Component {
                     placeholder='story-map-view'
                   />
 
-
                   <label htmlFor='tags'>Story Map Tags</label>
                   <ReactTags
                     tags={this.state.tags}
                     id="tags"
                     handleDelete={this.handleDelete.bind(this)}
                     handleAddition={this.handleAddition.bind(this)}
-                    handleDrag={this.handleDrag.bind(this)} />
+                  />
 
                   <button
                     onClick={e => {

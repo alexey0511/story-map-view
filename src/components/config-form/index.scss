@@ -22,3 +22,7 @@ form  > div {
 .ReactTags__tag {
   @extend .badge, .badge-primary;
 }
+
+#project-name {
+  margin-top: 10px;
+}
