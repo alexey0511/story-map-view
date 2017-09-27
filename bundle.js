@@ -18462,8 +18462,13 @@ module.exports = getFuncName;
 function Loading() {
   return __WEBPACK_IMPORTED_MODULE_0_react___default.a.createElement(
     'div',
-    null,
-    'Loading ...'
+    { style: { textAlign: 'center' } },
+    __WEBPACK_IMPORTED_MODULE_0_react___default.a.createElement('img', { src: 'assets/loading.gif' }),
+    __WEBPACK_IMPORTED_MODULE_0_react___default.a.createElement(
+      'h1',
+      null,
+      'Loading ...'
+    )
   );
 }
 
