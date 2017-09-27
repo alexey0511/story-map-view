@@ -1,9 +1,9 @@
 import React from 'react'
 import PropTypes from 'prop-types'
 
-// const SERVER_URL = 'http://localhost:3000'
-const SERVER_URL = 'https://story-map-view-server.herokuapp.com'
+const SERVER_URL = './api'
 
+import './index.scss'
 
 class Login extends React.Component {
   constructor(props) {
@@ -30,17 +30,24 @@ class Login extends React.Component {
       headers: new Headers({ 'Content-Type': 'application/json'}),
       body: JSON.stringify({username, password})})
 
-    if (response.status === 200) {
-      this.props.onAuthenticated(true)
-    } else {
-      this.props.onAuthenticated(false)
+    let isAuthenticated = await response.json()
+    this.props.onAuthenticated(isAuthenticated)
+  }
 
-    }
+  async logout() {
+    let response = await fetch(`api/logout/${this.props.service}`, {
+      credentials: 'include'
+    })
+    let data = await response.json()
+
+    this.props.onAuthenticated(!data)
   }
 
   render() {
     const { username, password } = this.state
-    return (
+    const { isAuthenticated } = this.props
+
+    const el = !isAuthenticated ?
       <div className="login-form">
         <label htmlFor='username'>Username</label>
         <input id='username' type='text' value={username} onChange={this.onUsernameChange.bind(this)} />
@@ -54,12 +61,22 @@ class Login extends React.Component {
         }.bind(this)}>Login</button>
 
       </div>
-    )
+      :
+      <div>
+        <label>Authenticated</label>
+        <button className="btn btn-primary" onClick={function(e) {
+          e.preventDefault()
+          this.logout()
+        }.bind(this)}>Logout</button>
+      </div>
+
+    return el
   }
 }
 
 Login.propTypes = {
   service: PropTypes.string.isRequired,
+  isAuthenticated: PropTypes.bool.isRequired,
   onAuthenticated: PropTypes.func.isRequired
 }
 

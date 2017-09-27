@@ -2,7 +2,6 @@
 //  1. clean up
 //  2. set state errors
 //  3. loading state
-//  4. remember labels on view
 
 import React from 'react'
 import ReactDOM from 'react-dom'
@@ -18,8 +17,8 @@ import LoginPrompt from 'components/modal'
 
 const issueTrackers = ['github', 'gitlab-external','redmine']
 
-// const SERVER_URL = 'http://localhost:3000'
-const SERVER_URL = 'https://story-map-view-server.herokuapp.com'
+const SERVER_URL = './api'
+
 
 class App extends React.Component {
   constructor(props) {
@@ -28,47 +27,59 @@ class App extends React.Component {
     let params = new URLSearchParams(props.location.search)
 
     this.state = {
-      allReady: false,
+      displayStoryMap: false,
       issues: [],
       releases: [],
       steps: [],
-      tags: [],
+      tags: params.has('tags') && params.get('tags') !== '' ? params.get('tags').split(',') : [],
       issueTracker: params.has('service') ? params.get('service') : issueTrackers[0],
       isAuthenticated: false,
-      service: ''
+      service: '',
+      isDirty: false
     }
   }
 
   async isAuthenticated(service) {
-    let response = await fetch(`${SERVER_URL}/is-authenticated/${service}`, { credentials: 'include' })
-    let isAuthenticated = await response.json()
-    this.setState({ isAuthenticated })
-    return isAuthenticated
+    try {
+      let response = await fetch(`${SERVER_URL}/is-authenticated/${service}`, { credentials: 'include' })
+      let data = await response.json()
+      this.setState({ isAuthenticated: data })
+      return data
+    } catch(e) { return false}
   }
 
 
   async checkView() {
     let params = new URLSearchParams(this.props.location.search)
     if (params.has('service')) {
-      this.setState({ isLoading: true, service: params.get('service') })
+      this.setState({ service: params.get('service') })
       try {
-        let isAuthenticated = await this.isAuthenticated(params.get('service'))
         if (params.has('project')) {
-          if (!isAuthenticated) {
-            // user can't see project because he is not authenticated
-            isAuthenticated = await this.loginPrompt.show()
-          }
-
-          if (isAuthenticated) {
-            this.setState({ selectedProject: params.get('project') })
-            this.loadData(params.get('project'))
+          // TRY to load view
+          const project = params.get('project')
+          if (sessionStorage &&
+              (sessionStorage.getItem('project-' + project) || sessionStorage.getItem('project-' + project + '-modified'))) {
+            if (sessionStorage.getItem('project-' + project + '-modified')) {
+              const projectData = JSON.parse(sessionStorage.getItem('project-' + project + '-modified'))
+              this.setState({isDirty: true})
+              this.showStoryMap(projectData)
+            } else if (sessionStorage.getItem('project-' + project)) {
+              const projectData = JSON.parse(sessionStorage.getItem('project-' + project))
+              this.showStoryMap(projectData)
+            }
+          } else {
+            let isAuthenticated = await this.isAuthenticated(params.get('service'))
+            if (!isAuthenticated) {
+              // user can't see project because he is not authenticated
+              isAuthenticated = await this.loginPrompt.show()
+            }
+            if (isAuthenticated) {
+              this.setState({ selectedProject: params.get('project') })
+              this.loadData(params.get('project'))
+            }
           }
         }
-        if (isAuthenticated) {
-          this.setState({ isAuthenticated })
-        }
-        this.setState({ isLoading: false})
-      } catch (e) { this.setState({ isLoading: false})}
+      } catch (e) { /* */}
     } else {
       this.props.history.push('?service=' + this.state.issueTracker)
     }
@@ -86,24 +97,25 @@ class App extends React.Component {
         this.props.history.push(`?${params.toString()}`)
 
         this.setState({ loadingData: false})
-
-        this.showStoryMap(data, this.state.tags)
+        // save data
+        if (sessionStorage) {
+          sessionStorage.setItem('project-' + project, JSON.stringify(data))
+        }
+        this.showStoryMap(data)
       } else {
         this.setState({ loadingData: false})
       }
-
     } catch(e) {
       this.setState({ loadingData: false})
     }
   }
+
   componentDidMount() {
     this.checkView()
   }
 
-
   goBack() {
-    this.setState({ allReady: false})
-    console.log('this', this.props)
+    this.setState({ displayStoryMap: false})
     let params = new URLSearchParams(this.props.location.search)
     if (params.get('project')) {
       params.delete('project')
@@ -111,13 +123,39 @@ class App extends React.Component {
     this.props.history.push(`?${params.toString()}`)
   }
 
-  showStoryMap({releases, steps, issues}, tags) {
+  moveStickyNote(release, label, issueToDrag) {
+    const { releases, steps } = this.state
+
+    if (issueToDrag.milestone && issueToDrag.labels) {
+      // copy array
+      let issues = [...this.state.issues]
+      issues.forEach(i => {
+        if (i.id === issueToDrag.id) {
+          i.milestone = release.title
+          i.labels = [label.name]
+        }
+      })
+
+      this.showStoryMap({ releases, steps, issues })
+
+      // save state to session sessionStorage
+      let params = new URLSearchParams(this.props.location.search)
+      if (sessionStorage && params.get('project')) {
+        let data = { releases, steps, issues }
+        sessionStorage.setItem('project-' + params.get('project') + '-modified', JSON.stringify(data))
+        this.setState({isDirty: true})
+      }
+    }
+  }
+
+  showStoryMap({releases, steps, issues}) {
+    const tags = this.state.tags
     if (tags.length) {
-      steps = steps.filter(c => tags.map(tag => tag.text).includes(c.name))
+      steps = steps.filter(c => tags.includes(c.name))
     }
 
     this.setState({
-      allReady: true,
+      displayStoryMap: true,
       releases,
       steps,
       issues
@@ -136,6 +174,28 @@ class App extends React.Component {
     return false
   }
 
+  removeSavedChanges() {
+    let params = new URLSearchParams(this.props.location.search)
+    let project = params.get('project')
+    if (sessionStorage && project) {
+      // remove object from session storage
+      sessionStorage.removeItem('project-' + project + '-modified')
+      this.setState({isDirty: false})
+      // reload issues
+      this.checkView()
+    }
+  }
+
+  clearSession() {
+    let params = new URLSearchParams(this.props.location.search)
+    let project = params.get('project')
+    if (sessionStorage && project) {
+      // remove object from session storage
+      sessionStorage.removeItem('project-' + project)
+    }
+    this.checkView()
+  }
+
   render() {
     return (
       <div>
@@ -143,31 +203,29 @@ class App extends React.Component {
           ref={dialog => this.loginPrompt = dialog}
           service={this.state.service}
         />
-
-        {
-          this.state.allReady ?
-            <StoryMapView
-              steps={this.state.steps}
-              releases={this.state.releases}
-              issues={this.state.issues}
-              onBack={this.goBack.bind(this)}
+        { this.state.displayStoryMap ?
+          <StoryMapView
+            steps={this.state.steps}
+            releases={this.state.releases}
+            issues={this.state.issues}
+            onBack={this.goBack.bind(this)}
+            isDirty={this.state.isDirty}
+            onUndo={this.removeSavedChanges.bind(this)}
+            onClearSession={this.clearSession.bind(this)}
+            onMoveStickyNote={this.moveStickyNote.bind(this)}
+          />
+          :
+          this.state.loadingData ? <Loading /> :
+            <Config
+              onShowStoryMap={this.showStoryMap.bind(this)}
+              onLoadData={this.loadData.bind(this)}
+              onAuthenticated={function (isAuthenticated) { this.setState({ isAuthenticated})}.bind(this)}
+              onServiceChange={this.changeService.bind(this)}
+              onError={this.handleErrors.bind(this)}
+              service={this.state.service}
+              isAuthenticated={this.state.isAuthenticated}
             />
-            :
-            this.state.loadingData ? <Loading /> :
-              <Config
-                onShowStoryMap={this.showStoryMap.bind(this)}
-                onLoadData={this.loadData.bind(this)}
-                onAuthenticated={function (isAuthenticated) { this.setState({ isAuthenticated})}.bind(this)}
-                onServiceChange={this.changeService.bind(this)}
-                onError={this.handleErrors.bind(this)}
-                service={this.state.service}
-                isAuthenticated={this.state.isAuthenticated}
-              />
         }
-        <div>Test data</div>
-        <div>Gitlab project: test-project</div>
-        <div>Github project: story-map-view</div>
-        <div>Redmine project: Catalon Story Mapping</div>
       </div>
     )
   }

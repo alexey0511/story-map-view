@@ -14,5 +14,12 @@
   box-shadow:0 4px 6px rgba(0,0,0,0.1);
   max-width:520px;
   max-height:250px;
+  height: 100px;
   padding: 5px;
+  &.step {
+    background: pink
+  }
+  &.release {
+    background: lightblue
+  }
 }

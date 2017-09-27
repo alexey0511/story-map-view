@@ -7,8 +7,10 @@ import Login from 'components/login'
 
 import './index.scss'
 
+const SERVER_URL = './api'
+
 // const SERVER_URL = 'http://localhost:3000'
-const SERVER_URL = 'https://story-map-view-server.herokuapp.com'
+// const SERVER_URL = 'https://story-map-view-server.herokuapp.com'
 
 
 class ConfigForm extends React.Component {
@@ -29,7 +31,7 @@ class ConfigForm extends React.Component {
   componentDidMount() {
     let params = new URLSearchParams(this.props.location.search)
     if (params.has('tags')) {
-      this.setState({ tags: params.get('tags').split(',').map(t => ({id: t, text: t}) )})
+      this.setState({ tags: params.get('tags').split(',') })
     }
   }
   componentWillReceiveProps(props) {
@@ -45,14 +47,19 @@ class ConfigForm extends React.Component {
 
   onProjectChange(e) {
     this.setState({ selectedProject: e.target.value })
+
+    // update url
+    let params = new URLSearchParams(this.props.location.search)
+    params.set('project', e.target.value)
+    this.props.history.push('?' + params.toString())
   }
 
   // // tags
   handleDelete(index) {
-    let tags = this.state.tags.map(t => t.id)
+    let tags = this.state.tags
     tags.splice(index, 1)
 
-    this.setState({tags: tags.map(t => ({id:t, text:t}) )})
+    this.setState({ tags })
     let params = new URLSearchParams(this.props.location.search)
     params.set('tags', tags.join(','))
     this.props.history.push('?' + params.toString())
@@ -68,7 +75,7 @@ class ConfigForm extends React.Component {
       tagsArray.push(tag)
     }
 
-    this.setState({ tags: tagsArray.map(t => ({id:t, text:t }))})
+    this.setState({ tags: tagsArray })
     params.set('tags', tagsArray.join(','))
     this.props.history.push('?'+ params.toString())
   }
@@ -91,6 +98,7 @@ class ConfigForm extends React.Component {
     this.setState({ loadingProjects: false })
 
   }
+
   render() {
     return (
       <div className='container'>
@@ -98,40 +106,45 @@ class ConfigForm extends React.Component {
           <div className='col-md-12'>
             { this.state.isLoading ? <Loading /> :
               <form className='form1' action=''>
-                {!this.props.isAuthenticated ?
-                  <Login
-                    service={this.props.service}
-                    onAuthenticated={this.props.onAuthenticated}
-                  />
-                  :
-                  <div>
-                    <label htmlFor='project-name'>Enter the project ID or select from the list</label>
-                    { this.state.projects.length ?
-                      <select id='projects' onChange={this.onProjectChange.bind(this)}  className="form-control">
-                        <option value=""></option>
-                        {this.state.projects.map((option, i) => <option key={i} value={option.id}>{option.name}</option>)}
-                      </select>
-                      :
-                      <button
-                        onClick={this.handleLoadProjects.bind(this)}
-                        className='btn btn-primary'
-                        disabled={this.state.loadingProjects}
-                      >Load Projects</button>
-                    }
-                  </div>
-                }
+                <Login
+                  service={this.props.service}
+                  isAuthenticated={this.props.isAuthenticated}
+                  onAuthenticated={this.props.onAuthenticated}
+                />
+
+                <hr />
+                { this.props.isAuthenticated &&
                 <div>
+                  <label htmlFor='project-name'>Enter the project ID or select from the list</label>
+                  { this.state.projects.length ?
+                    <select id='projects' onChange={this.onProjectChange.bind(this)}  className="form-control">
+                      <option value=""></option>
+                      {this.state.projects.map((option, i) => <option key={i} value={option.id}>{option.name}</option>)}
+                    </select>
+                    :
+                    <button
+                      onClick={this.handleLoadProjects.bind(this)}
+                      className='btn btn-primary'
+                      disabled={this.state.loadingProjects}
+                    >Load Projects</button>
+                  }
+                  <hr />
+                </div>
+                }
+
+                <div>
+                  <label htmlFor='project-name'>Selected Project</label>
                   <input
                     id='project-name'
                     type='text'
                     value={this.state.selectedProject}
                     onChange={this.onProjectChange.bind(this)}
-                    placeholder='story-map-view'
+                    placeholder='enter project id or select from the list'
                   />
 
                   <label htmlFor='tags'>Story Map Tags</label>
                   <ReactTags
-                    tags={this.state.tags}
+                    tags={this.state.tags.map(t => ({id: t, text: t}) )}
                     id="tags"
                     handleDelete={this.handleDelete.bind(this)}
                     handleAddition={this.handleAddition.bind(this)}

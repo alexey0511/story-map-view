@@ -46,6 +46,7 @@ class LoginPrompt extends Component {
         <ModalBody>
           <Login
             service={this.props.service}
+            isAuthenticated={false}
             onAuthenticated={this.confirm.bind(this)}
           />
         </ModalBody>

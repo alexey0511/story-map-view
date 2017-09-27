@@ -1,14 +1,22 @@
 import React from 'react'
 import PropTypes from 'prop-types'
-
+import classnames from 'classnames'
+import { DragSource } from 'react-dnd'
 import './index.scss'
 
 class StickyNote extends React.Component {
   render() {
-    return (
-      <div className="issue">
-        <div>{this.props.issue.title}</div>
-        <small>{this.props.issue.user}</small>
+    const { connectDragSource, isDragging, type, issue } = this.props
+
+    const classes = classnames(
+      'issue',
+      type === 'step' ? 'step': null,
+      type === 'release' ? 'release' : null
+    )
+    return connectDragSource(
+      <div className={classes} style={{ opacity: isDragging ? 0 : 1}}>
+        <div>{issue.title}</div>
+        <small>{issue.user}</small>
       </div>
     )
   }
@@ -16,6 +24,25 @@ class StickyNote extends React.Component {
 
 StickyNote.propTypes = {
   issue: PropTypes.object.isRequired,
+  type: PropTypes.string,
+  connectDragSource: PropTypes.func.isRequired,
+  isDragging: PropTypes.bool.isRequired
 }
 
-export default StickyNote
+
+const NoteSource = {
+  beginDrag(props) {
+    return {
+      issue: props.issue
+    }
+  }
+}
+
+const collect = (connect, monitor) => {
+  return {
+    connectDragSource: connect.dragSource(),
+    isDragging: monitor.isDragging()
+  }
+}
+
+export default DragSource('note', NoteSource, collect)(StickyNote)

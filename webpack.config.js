@@ -66,7 +66,12 @@ switch (env) {
       devtool: 'cheap-module-eval-source-map',
 
       devServer: {
-        historyApiFallback: true // enables reloads of routed pages
+        proxy: {
+          '/api': {
+            target: 'http://localhost:8081',
+            changeOrigin: true
+          }
+        }
       },
 
       // because we need to use ExtractTextPlugin for prod, we have to specify the 'dev' scss test here
