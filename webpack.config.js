@@ -3,6 +3,7 @@ const autoprefixer = require('autoprefixer');
 const flexfixes = require('postcss-flexbugs-fixes');
 const HtmlWebpackPlugin = require('html-webpack-plugin');
 const ExtractTextPlugin = require('extract-text-webpack-plugin');
+const CopyWebpackPlugin = require('copy-webpack-plugin')
 const merge = require('webpack-merge');
 
 const env = process.env.npm_lifecycle_event === 'build' ? 'prod' : 'dev';
@@ -39,10 +40,17 @@ const common = {
   },
 
   plugins: [
+    new ExtractTextPlugin('bundle.css'),
     new HtmlWebpackPlugin({
       template: './src/index.html',
       hash: true
-    })
+    }),
+    new CopyWebpackPlugin([{
+      from: './src/assets',
+      to: 'assets',
+      ignore: ['.gitignore']
+    }]),
+
   ],
 
   resolve: {
@@ -58,7 +66,12 @@ switch (env) {
       devtool: 'cheap-module-eval-source-map',
 
       devServer: {
-        historyApiFallback: true // enables reloads of routed pages
+        proxy: {
+          '/api': {
+            target: 'http://localhost:8081',
+            changeOrigin: true
+          }
+        }
       },
 
       // because we need to use ExtractTextPlugin for prod, we have to specify the 'dev' scss test here
@@ -129,7 +142,13 @@ switch (env) {
       },
 
       plugins: [
-        new ExtractTextPlugin('bundle.css')
+        new ExtractTextPlugin('bundle.css'),
+        new CopyWebpackPlugin([{
+          from: './src/assets',
+          to: 'assets',
+          ignore: ['.gitignore']
+        }]),
+
       ]
     });
     break;
