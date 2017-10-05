@@ -34,40 +34,37 @@ class StoryMapView extends React.Component {
       rows.push(row)
     })
     return (
-      <div className="container">
-        <div className="row">
-          <div className="col-md-12">
-            <h1 className="story-map-view-title">Story Map</h1>
-            <button className="btn btn-primary" onClick={() => this.props.onBack()}>GO Back</button>
-            <button className="btn btn-primary" onClick={() => this.props.onUndo()} disabled={!isDirty}>Undo</button>
-            <button className="btn btn-primary" onClick={() => this.props.onClearSession()} disabled={isDirty}>clear Session</button>
-            {
-              isDirty &&
-              <div className="alert alert-warning" role="alert">
-                Story Map has been modified locally
-              </div>
-            }
-            <hr />
-            <div className="main-content story-map">
-              <table>
-                <thead>
-                  <tr className="table-header-row">
-                    <td></td>
-                    {steps.slice().reverse().map((c, id) => (
-                      <th key={id} scope="col" className="workflow-step">
-                        <StickyNote issue={{title: c.name, user: ''}} type="step" />
-                      </th>
-                    )
-                    )}
-                  </tr>
-                </thead>
-                <tbody>
-                  {rows}
-                </tbody>
-              </table>
+      <div>
+        <div className="story-map menu" >
+          <h1 className="story-map-view-title">Story Map</h1>
+          <button className="btn btn-primary" onClick={() => this.props.onBack()}>GO Back</button>
+          <button className="btn btn-primary" onClick={() => this.props.onUndo()} disabled={!isDirty}>Undo</button>
+          <button className="btn btn-primary" onClick={() => this.props.onDownloadServer()} disabled={isDirty}>Download from server </button>
+          {
+            isDirty &&
+            <div className="alert alert-warning" role="alert">
+              Story Map has been modified locally
             </div>
-
-          </div>
+          }
+          <hr />
+        </div>
+        <div className="main-content story-map">
+          <table>
+            <thead>
+              <tr className="table-header-row">
+                <td></td>
+                {steps.slice().reverse().map((c, id) => (
+                  <th key={id} scope="col" className="workflow-step">
+                    <StickyNote issue={{title: c.name, user: ''}} type="step" />
+                  </th>
+                )
+                )}
+              </tr>
+            </thead>
+            <tbody>
+              {rows}
+            </tbody>
+          </table>
         </div>
       </div>
     )
@@ -79,7 +76,7 @@ StoryMapView.propTypes = {
   releases: PropTypes.array.isRequired,
   issues: PropTypes.array.isRequired,
   onMoveStickyNote: PropTypes.func.isRequired,
-  onClearSession: PropTypes.func.isRequired,
+  onDownloadServer: PropTypes.func.isRequired,
   isDirty: PropTypes.bool.isRequired,
   onUndo: PropTypes.func.isRequired,
   onBack: PropTypes.func.isRequired

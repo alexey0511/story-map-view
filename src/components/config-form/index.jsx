@@ -9,10 +9,6 @@ import './index.scss'
 
 const SERVER_URL = './api'
 
-// const SERVER_URL = 'http://localhost:3000'
-// const SERVER_URL = 'https://story-map-view-server.herokuapp.com'
-
-
 class ConfigForm extends React.Component {
   constructor(props) {
     super(props)
@@ -63,7 +59,6 @@ class ConfigForm extends React.Component {
     let params = new URLSearchParams(this.props.location.search)
     params.set('tags', tags.join(','))
     this.props.history.push('?' + params.toString())
-
   }
 
   handleAddition(tag) {
@@ -96,7 +91,6 @@ class ConfigForm extends React.Component {
       console.log(err)
       this.props.onError(err) }
     this.setState({ loadingProjects: false })
-
   }
 
   render() {

@@ -11,8 +11,6 @@ import './index.scss'
 class Config extends React.Component {
   constructor(props) {
     super(props)
-
-
     let params = new URLSearchParams(props.location.search)
 
     this.state = {
@@ -37,7 +35,6 @@ class Config extends React.Component {
     }
 
     this.props.history.push(`?${params.toString()}`)
-
   }
 
   render() {

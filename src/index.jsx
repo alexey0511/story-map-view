@@ -186,7 +186,7 @@ class App extends React.Component {
     }
   }
 
-  clearSession() {
+  downloadFromServer() {
     let params = new URLSearchParams(this.props.location.search)
     let project = params.get('project')
     if (sessionStorage && project) {
@@ -211,7 +211,7 @@ class App extends React.Component {
             onBack={this.goBack.bind(this)}
             isDirty={this.state.isDirty}
             onUndo={this.removeSavedChanges.bind(this)}
-            onClearSession={this.clearSession.bind(this)}
+            onDownloadServer={this.downloadFromServer.bind(this)}
             onMoveStickyNote={this.moveStickyNote.bind(this)}
           />
           :

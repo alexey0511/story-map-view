@@ -87,5 +87,10 @@ header {
 .story-map-view-title {
   display: inline-block;
   margin-right: 20px;
+}
 
+@media print {
+  .story-map.menu {
+    display: none;
+  }
 }
